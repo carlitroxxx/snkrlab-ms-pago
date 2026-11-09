@@ -6,23 +6,25 @@ import com.snkrlab.pago.repository.PagoRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.UUID;
+import org.springframework.transaction.PlatformTransactionManager;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.any;
 
 class PagoServiceTest {
     private final PagoRepository repository = mock(PagoRepository.class);
-    private final PagoService service = new PagoService(repository, new SimuladorPagoService());
+    private final PagoService service = new PagoService(repository, new SimuladorPagoService(), mock(PlatformTransactionManager.class));
 
     @Test void persisteCadaResultadoConIdentidadMonedaYFecha() {
-        when(repository.save(any(Pago.class))).thenAnswer(invocation -> {
+        when(repository.saveAndFlush(any(Pago.class))).thenAnswer(invocation -> {
             Pago pago = invocation.getArgument(0);
-            assertNull(pago.getId());
+            assertNotNull(pago.getIntentoId());
             pago.setId(1L);
             return pago;
         });
         for (String referencia : List.of("SIM_APROBADA_01", "SIM_RECHAZADA_01")) {
-            var respuesta = service.registrar("cognito:usuario", new PagoSolicitudDTO(12L, 15000, referencia));
+            var respuesta = service.registrar("cognito:usuario", new PagoSolicitudDTO(UUID.randomUUID(), 12L, 15000, referencia));
             assertEquals(1L, respuesta.id());
             assertEquals(12L, respuesta.ordenId());
             assertEquals("cognito:usuario", respuesta.usuarioId());
@@ -33,22 +35,22 @@ class PagoServiceTest {
             assertEquals(referencia.equals("SIM_APROBADA_01") ? EstadoPago.APROBADO : EstadoPago.RECHAZADO,
                     respuesta.resultado());
         }
-        verify(repository, times(2)).save(any(Pago.class));
+        verify(repository, times(4)).saveAndFlush(any(Pago.class));
     }
 
     @Test void noPersisteSolicitudesInvalidas() {
         for (PagoSolicitudDTO solicitud : List.of(
-                new PagoSolicitudDTO(null, 100, "SIM_APROBADA_01"),
-                new PagoSolicitudDTO(0L, 100, "SIM_APROBADA_01"),
-                new PagoSolicitudDTO(1L, null, "SIM_APROBADA_01"),
-                new PagoSolicitudDTO(1L, 0, "SIM_APROBADA_01"),
-                new PagoSolicitudDTO(1L, -1, "SIM_APROBADA_01"),
-                new PagoSolicitudDTO(1L, 100, "desconocida"))) {
+                new PagoSolicitudDTO(UUID.randomUUID(), null, 100, "SIM_APROBADA_01"),
+                new PagoSolicitudDTO(UUID.randomUUID(), 0L, 100, "SIM_APROBADA_01"),
+                new PagoSolicitudDTO(UUID.randomUUID(), 1L, null, "SIM_APROBADA_01"),
+                new PagoSolicitudDTO(UUID.randomUUID(), 1L, 0, "SIM_APROBADA_01"),
+                new PagoSolicitudDTO(UUID.randomUUID(), 1L, -1, "SIM_APROBADA_01"),
+                new PagoSolicitudDTO(UUID.randomUUID(), 1L, 100, "desconocida"))) {
             assertThrows(ResponseStatusException.class, () -> service.registrar("usuario", solicitud));
         }
         assertThrows(ResponseStatusException.class, () -> service.registrar("usuario", null));
-        assertThrows(ResponseStatusException.class, () -> service.registrar("", new PagoSolicitudDTO(1L, 1, "SIM_APROBADA_01")));
-        verifyNoInteractions(repository);
+        assertThrows(ResponseStatusException.class, () -> service.registrar("", new PagoSolicitudDTO(UUID.randomUUID(), 1L, 1, "SIM_APROBADA_01")));
+        verify(repository, never()).saveAndFlush(any(Pago.class));
     }
 
     @Test void consultaSoloElUsuarioIndicado() {

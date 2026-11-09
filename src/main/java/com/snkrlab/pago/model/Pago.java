@@ -2,11 +2,23 @@ package com.snkrlab.pago.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "pagos")
+@Table(name = "pagos", uniqueConstraints = @UniqueConstraint(
+        name = "uk_pagos_intento_id", columnNames = "intento_id"))
 public class Pago {
     public Pago() {}
+
+    // Nullable exclusivamente por compatibilidad con pagos históricos.
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "intento_id", length = 36, updatable = false)
+    private UUID intentoId;
+
+    public UUID getIntentoId() { return intentoId; }
+    public void setIntentoId(UUID valor) { this.intentoId = valor; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
