@@ -1,0 +1,26 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: snkrlab-ms-pago
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3311/snkrlab_payments_db?useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          tenant-id: ${AZURE_TENANT_ID}
+
+app:
+  seguridad:
+    azure-client-id: ${AZURE_CLIENT_ID}
+    cognito-issuer: ${COGNITO_ISSUER}
+    cognito-client-id: ${COGNITO_CLIENT_ID}
