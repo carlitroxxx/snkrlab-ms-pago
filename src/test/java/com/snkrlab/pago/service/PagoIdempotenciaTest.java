@@ -18,7 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 class PagoIdempotenciaTest {
     private final PagoRepository repository = mock(PagoRepository.class);
     private final SimuladorPagoService simulador = spy(new SimuladorPagoService());
-    private final PagoService service = new PagoService(repository, simulador, mock(PlatformTransactionManager.class));
+    private final AntifraudeService antifraude = mock(AntifraudeService.class);
+    private final PagoService service = new PagoService(repository, simulador, mock(PlatformTransactionManager.class), antifraude);
     private final UUID intento = UUID.randomUUID();
     private final PagoSolicitudDTO solicitud = new PagoSolicitudDTO(intento, 1L, 100, "SIM_APROBADA_01");
 
@@ -38,7 +39,7 @@ class PagoIdempotenciaTest {
             when(repository.findByIntentoId(intento)).thenReturn(Optional.of(pago));
             assertEquals(PagoRespuestaDTO.desde(pago), service.registrar("usuario", solicitud));
         }
-        verifyNoInteractions(simulador);
+        verifyNoInteractions(simulador, antifraude);
         verify(repository, never()).saveAndFlush(any());
     }
 

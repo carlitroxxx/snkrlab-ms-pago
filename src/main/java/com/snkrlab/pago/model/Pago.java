@@ -39,6 +39,7 @@ public class Pago {
     @Column(nullable = false, length = 32)
     private String referenciaPago;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private EstadoPago resultado;

@@ -22,14 +22,17 @@ import java.util.List;
 public class PagoService {
     private final PagoRepository repository;
     private final SimuladorPagoService simulador;
+    private final AntifraudeService antifraude;
 
     private final TransactionTemplate transaccion;
 
     public PagoService(PagoRepository repository, SimuladorPagoService simulador,
-            PlatformTransactionManager transactionManager) {
+            PlatformTransactionManager transactionManager, AntifraudeService antifraude) {
         this.repository = repository;
+        this.antifraude = antifraude;
         this.simulador = simulador;
         this.transaccion = new TransactionTemplate(transactionManager);
+        this.transaccion.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
         this.transaccion.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
@@ -90,7 +93,9 @@ public class PagoService {
         pago.setReferenciaPago(solicitud.referenciaPago());
         pago.setFecha(LocalDateTime.now(ZoneOffset.UTC));
         repository.saveAndFlush(pago); // Reserva UNIQUE antes de simular, incluso entre instancias.
-        pago.setResultado(simulador.evaluar(solicitud.referenciaPago()));
+        if (!antifraude.bloquearSiCorresponde(pago)) {
+            pago.setResultado(simulador.evaluar(solicitud.referenciaPago()));
+        }
         return PagoRespuestaDTO.desde(repository.saveAndFlush(pago));
     }
 

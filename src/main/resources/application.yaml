@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
@@ -24,6 +24,9 @@ spring:
           tenant-id: ${AZURE_TENANT_ID}
 
 app:
+  antifraude:
+    ventana-segundos: 10
+    max-intentos: 3
   seguridad:
     azure-client-id: ${AZURE_CLIENT_ID}
     cognito-issuer: ${COGNITO_ISSUER}

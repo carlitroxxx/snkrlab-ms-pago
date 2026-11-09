@@ -14,7 +14,8 @@ import static org.mockito.ArgumentMatchers.any;
 
 class PagoServiceTest {
     private final PagoRepository repository = mock(PagoRepository.class);
-    private final PagoService service = new PagoService(repository, new SimuladorPagoService(), mock(PlatformTransactionManager.class));
+    private final AntifraudeService antifraude = mock(AntifraudeService.class);
+    private final PagoService service = new PagoService(repository, new SimuladorPagoService(), mock(PlatformTransactionManager.class), antifraude);
 
     @Test void persisteCadaResultadoConIdentidadMonedaYFecha() {
         when(repository.saveAndFlush(any(Pago.class))).thenAnswer(invocation -> {
@@ -51,6 +52,22 @@ class PagoServiceTest {
         assertThrows(ResponseStatusException.class, () -> service.registrar("usuario", null));
         assertThrows(ResponseStatusException.class, () -> service.registrar("", new PagoSolicitudDTO(UUID.randomUUID(), 1L, 1, "SIM_APROBADA_01")));
         verify(repository, never()).saveAndFlush(any(Pago.class));
+    }
+
+    @Test void persisteBloqueadoSinEjecutarSimulador() {
+        SimuladorPagoService simulador = mock(SimuladorPagoService.class);
+        PagoService flujo = new PagoService(repository, simulador,
+                mock(PlatformTransactionManager.class), antifraude);
+        when(repository.saveAndFlush(any(Pago.class))).thenAnswer(inv -> {
+            Pago p = inv.getArgument(0); p.setId(1L); return p;
+        });
+        when(antifraude.bloquearSiCorresponde(any())).thenAnswer(inv -> {
+            Pago p = inv.getArgument(0); p.setResultado(EstadoPago.BLOQUEADO_FRAUDE); return true;
+        });
+        assertEquals(EstadoPago.BLOQUEADO_FRAUDE, flujo.registrar("usuario",
+                new PagoSolicitudDTO(UUID.randomUUID(), 1L, 100, "SIM_APROBADA_01")).resultado());
+        verify(repository, times(2)).saveAndFlush(any(Pago.class));
+        verifyNoInteractions(simulador);
     }
 
     @Test void consultaSoloElUsuarioIndicado() {
