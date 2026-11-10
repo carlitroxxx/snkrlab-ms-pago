@@ -11,6 +11,7 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
             String referencia, java.time.LocalDateTime desde, java.time.LocalDateTime hasta, Long id);
 
     Optional<Pago> findByIntentoId(UUID intentoId);
+    Optional<Pago> findByIdAndUsuarioId(Long id, String usuarioId);
 
     List<Pago> findByUsuarioIdOrderByFechaDesc(String usuarioId);
 }

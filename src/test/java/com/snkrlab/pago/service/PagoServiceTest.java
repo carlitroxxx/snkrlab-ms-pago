@@ -76,4 +76,36 @@ class PagoServiceTest {
         verify(repository).findByUsuarioIdOrderByFechaDesc("usuario");
         assertThrows(ResponseStatusException.class, () -> service.consultarPorUsuario(null));
     }
+
+    @Test void consultaPagoPropioSinModificarResultado() {
+        Pago pago = new Pago();
+        pago.setId(1L); pago.setUsuarioId("usuario"); pago.setOrdenId(12L);
+        pago.setImporte(15000); pago.setMoneda("CLP");
+        pago.setIntentoId(UUID.randomUUID()); pago.setReferenciaPago("SIM_RECHAZADA_01");
+        pago.setFecha(java.time.LocalDateTime.of(2026, 1, 1, 12, 0));
+        pago.setResultado(EstadoPago.RECHAZADO);
+        when(repository.findByIdAndUsuarioId(1L, "usuario")).thenReturn(java.util.Optional.of(pago));
+        assertEquals(com.snkrlab.pago.dto.PagoRespuestaDTO.desde(pago), service.consultarPorId(1L, "usuario"));
+        verify(repository).findByIdAndUsuarioId(1L, "usuario");
+        verifyNoMoreInteractions(repository);
+        verifyNoInteractions(antifraude);
+    }
+
+    @Test void pagoInexistenteDevuelve404() {
+        when(repository.findByIdAndUsuarioId(99L, "usuario")).thenReturn(java.util.Optional.empty());
+        assertEquals(404, assertThrows(ResponseStatusException.class,
+                () -> service.consultarPorId(99L, "usuario")).getStatusCode().value());
+        verify(repository).findByIdAndUsuarioId(99L, "usuario");
+        verifyNoMoreInteractions(repository);
+        verifyNoInteractions(antifraude);
+    }
+
+    @Test void pagoAjenoDevuelve404SinConsultarSinPropietario() {
+        when(repository.findByIdAndUsuarioId(1L, "otro")).thenReturn(java.util.Optional.empty());
+        assertEquals(404, assertThrows(ResponseStatusException.class,
+                () -> service.consultarPorId(1L, "otro")).getStatusCode().value());
+        verify(repository).findByIdAndUsuarioId(1L, "otro");
+        verifyNoMoreInteractions(repository);
+        verifyNoInteractions(antifraude);
+    }
 }

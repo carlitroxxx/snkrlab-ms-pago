@@ -106,6 +106,14 @@ public class PagoService {
                 .map(PagoRespuestaDTO::desde).toList();
     }
 
+    @Transactional(readOnly = true)
+    public PagoRespuestaDTO consultarPorId(Long id, String usuarioId) {
+        validarUsuario(usuarioId);
+        return repository.findByIdAndUsuarioId(id, usuarioId)
+                .map(PagoRespuestaDTO::desde)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pago no encontrado."));
+    }
+
     private void validarUsuario(String usuarioId) {
         if (usuarioId == null || usuarioId.isBlank() || usuarioId.length() > 255) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
