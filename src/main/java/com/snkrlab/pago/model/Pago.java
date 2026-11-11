@@ -10,6 +10,11 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "pagos", uniqueConstraints = @UniqueConstraint(
         name = "uk_pagos_intento_id", columnNames = "intento_id"))
 public class Pago {
+    // Nullable para preservar registros anteriores sin inventar una tarjeta.
+    @Column(name = "tarjeta_id", length = 32, updatable = false)
+    private String tarjetaId;
+    public String getTarjetaId() { return tarjetaId; }
+    public void setTarjetaId(String valor) { tarjetaId = valor; }
     public Pago() {}
 
     // Nullable exclusivamente por compatibilidad con pagos históricos.

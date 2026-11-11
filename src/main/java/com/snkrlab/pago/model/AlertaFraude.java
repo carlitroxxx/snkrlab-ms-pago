@@ -7,6 +7,11 @@ import org.hibernate.type.SqlTypes;
 @Entity
 @Table(name = "alertas_fraude")
 public class AlertaFraude {
+    // Nullable para preservar registros anteriores sin inventar una tarjeta.
+    @Column(name = "tarjeta_id", length = 32, updatable = false)
+    private String tarjetaId;
+    public String getTarjetaId() { return tarjetaId; }
+    public void setTarjetaId(String valor) { tarjetaId = valor; }
     public AlertaFraude() {}
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

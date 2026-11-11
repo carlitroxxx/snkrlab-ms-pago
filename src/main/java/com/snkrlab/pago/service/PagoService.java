@@ -65,6 +65,7 @@ public class PagoService {
                 || !Objects.equals(pago.getOrdenId(), solicitud.ordenId())
                 || !Objects.equals(pago.getImporte(), solicitud.importe())
                 || !Objects.equals(pago.getReferenciaPago(), solicitud.referenciaPago())
+                || !Objects.equals(pago.getTarjetaId(), solicitud.tarjetaId())
                 || !"CLP".equals(pago.getMoneda())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "El intentoId ya está asociado a otros datos.");
@@ -82,7 +83,13 @@ public class PagoService {
                 && !SimuladorPagoService.RECHAZADA.equals(solicitud.referenciaPago())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Referencia simulada no permitida.");
         }
+        if (solicitud.tarjetaId() == null || !java.util.Set.of(
+                "SIM_TARJETA_01", "SIM_TARJETA_02", "SIM_TARJETA_03").contains(solicitud.tarjetaId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "tarjetaId es obligatorio para pagos nuevos: use SIM_TARJETA_01, SIM_TARJETA_02 o SIM_TARJETA_03.");
+        }
         Pago pago = new Pago();
+        pago.setTarjetaId(solicitud.tarjetaId());
         pago.setIntentoId(solicitud.intentoId());
         // Valor provisional no visible fuera de esta transacción. Si falla, se revierte todo.
         pago.setResultado(EstadoPago.RECHAZADO);

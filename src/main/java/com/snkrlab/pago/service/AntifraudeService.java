@@ -29,25 +29,26 @@ public class AntifraudeService {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public boolean bloquearSiCorresponde(Pago pago) {
-        referencias.bloquear(pago.getReferenciaPago()).orElseThrow(() ->
+        referencias.bloquear(pago.getTarjetaId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
-                        "Falta configurar la referencia antifraude en MySQL."));
+                        "Falta configurar la tarjeta simulada antifraude en MySQL."));
         // Tomar la hora tras adquirir el bloqueo. Se mantiene hasta commit/rollback.
         LocalDateTime ahora = LocalDateTime.ofInstant(reloj.instant(), ZoneOffset.UTC);
         pago.setFecha(ahora);
-        long cantidad = pagos.countByReferenciaPagoAndFechaGreaterThanAndFechaLessThanEqualAndIdNot(
-                pago.getReferenciaPago(), ahora.minusSeconds(ventana), ahora, pago.getId()) + 1;
+        long cantidad = pagos.countByTarjetaIdAndFechaGreaterThanAndFechaLessThanEqualAndIdNot(
+                pago.getTarjetaId(), ahora.minusSeconds(ventana), ahora, pago.getId()) + 1;
         if (cantidad <= maximo) return false;
         pago.setResultado(EstadoPago.BLOQUEADO_FRAUDE);
         AlertaFraude alerta = new AlertaFraude();
         alerta.setIntentoId(pago.getIntentoId());
+        alerta.setTarjetaId(pago.getTarjetaId());
         alerta.setReferenciaPago(pago.getReferenciaPago());
         alerta.setUsuarioId(pago.getUsuarioId());
         alerta.setMomento(ahora);
         alerta.setCantidadIntentos(cantidad);
         alerta.setVentanaSegundos(ventana);
         alerta.setMaxIntentos(maximo);
-        alerta.setMotivo("Más de " + maximo + " usos de la referencia en " + ventana + " segundos");
+        alerta.setMotivo("Más de " + maximo + " usos de la tarjeta simulada en " + ventana + " segundos");
         alertas.save(alerta);
         return true;
     }

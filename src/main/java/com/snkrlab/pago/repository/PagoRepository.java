@@ -7,8 +7,8 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface PagoRepository extends JpaRepository<Pago, Long> {
-    long countByReferenciaPagoAndFechaGreaterThanAndFechaLessThanEqualAndIdNot(
-            String referencia, java.time.LocalDateTime desde, java.time.LocalDateTime hasta, Long id);
+    long countByTarjetaIdAndFechaGreaterThanAndFechaLessThanEqualAndIdNot(
+            String tarjetaId, java.time.LocalDateTime desde, java.time.LocalDateTime hasta, Long id);
 
     Optional<Pago> findByIntentoId(UUID intentoId);
     Optional<Pago> findByIdAndUsuarioId(Long id, String usuarioId);
