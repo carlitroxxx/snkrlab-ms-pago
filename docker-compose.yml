@@ -1,0 +1,64 @@
+services:
+  db-pagos:
+    image: mysql:8.0
+    container_name: snkrlab-db-pagos
+    restart: unless-stopped
+    command:
+      - --innodb-buffer-pool-size=64M
+      - --performance-schema=OFF
+      - --max-connections=40
+    environment:
+      MYSQL_DATABASE: snkrlab_payments_db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mysql_payments_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'MYSQL_PWD="$${MYSQL_ROOT_PASSWORD}" mysql -h 127.0.0.1 -u root snkrlab_payments_db -e "SELECT 1"'
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ms-pago:
+    build: .
+    container_name: snkrlab-ms-pago
+    restart: unless-stopped
+    ports:
+      - "${HOST_PRIVATE_IP:?Falta HOST_PRIVATE_IP}:8087:8087"
+    environment:
+      DB_URL: "jdbc:mysql://db-pagos:3306/snkrlab_payments_db?useSSL=false&allowPublicKeyRetrieval=true"
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD}
+      SERVER_PORT: 8087
+      SERVER_ADDRESS: 0.0.0.0
+      SPRING_PROFILES_ACTIVE: local
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID:?Falta AZURE_TENANT_ID}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:?Falta AZURE_CLIENT_ID}
+      COGNITO_ISSUER: ${COGNITO_ISSUER:?Falta COGNITO_ISSUER}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:?Falta COGNITO_CLIENT_ID}
+      JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true -Xms64m -Xmx320m"
+    depends_on:
+      db-pagos:
+        condition: service_healthy
+    networks:
+      - default
+      - snkrlab-compartida
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  snkrlab-compartida:
+    external: true
+
+volumes:
+  mysql_payments_data:
