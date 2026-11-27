@@ -241,6 +241,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/pagos/webpay/retorno").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/pagos/webpay/retorno").permitAll()
                         .anyRequest().hasRole("Cliente")
