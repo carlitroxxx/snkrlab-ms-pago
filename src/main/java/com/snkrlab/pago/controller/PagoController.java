@@ -31,11 +31,6 @@ public class PagoController {
                 .body(service.registrar(usuarioIdDesde(jwt), solicitud));
     }
 
-    @GetMapping("/{id}")
-    public PagoRespuestaDTO consultar(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
-        return service.consultarPorId(id, usuarioIdDesde(jwt));
-    }
-
     private String usuarioIdDesde(Jwt jwt) {
         if (jwt == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         boolean esCognito = cognitoIssuer.equals(jwt.getClaimAsString("iss"));

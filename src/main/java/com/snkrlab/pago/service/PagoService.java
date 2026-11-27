@@ -20,6 +20,7 @@ import java.util.List;
 
 @Service
 public class PagoService {
+    private final com.snkrlab.pago.webpay.CompraGuard guard;
     private final PagoRepository repository;
     private final SimuladorPagoService simulador;
     private final AntifraudeService antifraude;
@@ -27,7 +28,9 @@ public class PagoService {
     private final TransactionTemplate transaccion;
 
     public PagoService(PagoRepository repository, SimuladorPagoService simulador,
-            PlatformTransactionManager transactionManager, AntifraudeService antifraude) {
+            PlatformTransactionManager transactionManager, AntifraudeService antifraude,
+            com.snkrlab.pago.webpay.CompraGuard guard) {
+        this.guard = guard;
         this.repository = repository;
         this.antifraude = antifraude;
         this.simulador = simulador;
@@ -46,6 +49,8 @@ public class PagoService {
             return transaccion.execute(status -> {
                 var existente = repository.findByIntentoId(solicitud.intentoId());
                 if (existente.isPresent()) return recuperar(existente.get(), usuarioId, solicitud);
+                if (solicitud.ordenId() == null || solicitud.ordenId() <= 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                guard.reservar(solicitud.ordenId(), "SIMULADO");
                 return crear(usuarioId, solicitud);
             });
         } catch (DataIntegrityViolationException ex) {
@@ -89,6 +94,7 @@ public class PagoService {
                     "tarjetaId es obligatorio para pagos nuevos: use SIM_TARJETA_01, SIM_TARJETA_02 o SIM_TARJETA_03.");
         }
         Pago pago = new Pago();
+        pago.setProveedor("SIMULADO");
         pago.setTarjetaId(solicitud.tarjetaId());
         pago.setIntentoId(solicitud.intentoId());
         // Valor provisional no visible fuera de esta transacción. Si falla, se revierte todo.

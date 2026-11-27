@@ -24,6 +24,10 @@ spring:
           tenant-id: ${AZURE_TENANT_ID}
 
 app:
+  webpay:
+    return-url: ${WEBPAY_RETURN_URL}
+    frontend-url: ${WEBPAY_FRONTEND_URL}
+    ordenes-url: ${ORDENES_URL}
   antifraude:
     ventana-segundos: 10
     max-intentos: 3

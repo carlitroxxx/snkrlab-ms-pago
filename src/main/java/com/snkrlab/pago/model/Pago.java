@@ -10,6 +10,10 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "pagos", uniqueConstraints = @UniqueConstraint(
         name = "uk_pagos_intento_id", columnNames = "intento_id"))
 public class Pago {
+    @Column(length=16)
+    private String proveedor;
+    public String getProveedor() { return proveedor == null ? "SIMULADO" : proveedor; }
+    public void setProveedor(String valor) { proveedor = valor; }
     // Nullable para preservar registros anteriores sin inventar una tarjeta.
     @Column(name = "tarjeta_id", length = 32, updatable = false)
     private String tarjetaId;

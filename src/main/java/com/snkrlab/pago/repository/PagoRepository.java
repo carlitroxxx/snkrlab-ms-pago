@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface PagoRepository extends JpaRepository<Pago, Long> {
+    boolean existsByOrdenId(Long ordenId);
     long countByTarjetaIdAndFechaGreaterThanAndFechaLessThanEqualAndIdNot(
             String tarjetaId, java.time.LocalDateTime desde, java.time.LocalDateTime hasta, Long id);
 

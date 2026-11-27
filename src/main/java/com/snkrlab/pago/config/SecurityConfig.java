@@ -241,6 +241,8 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/pagos/webpay/retorno").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/pagos/webpay/retorno").permitAll()
                         .anyRequest().hasRole("Cliente")
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

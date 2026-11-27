@@ -6,3 +6,9 @@ spring:
     deserialization:
       fail-on-unknown-properties: true
       accept-float-as-int: false
+
+app:
+  webpay:
+    return-url: ${WEBPAY_RETURN_URL:http://localhost:8087/api/v1/pagos/webpay/retorno}
+    frontend-url: ${WEBPAY_FRONTEND_URL:http://localhost:5173/pago/resultado}
+    ordenes-url: ${ORDENES_URL:http://localhost:8085}
